@@ -13,6 +13,7 @@ import {
   equip,
   equippedAmount,
   equippedItem,
+  familiarWeight,
   getCampground,
   getDwelling,
   getWorkshed,
@@ -56,6 +57,7 @@ import {
   $location,
   $monster,
   $monsters,
+  $phylum,
   $skill,
   $slot,
   $stat,
@@ -65,6 +67,7 @@ import {
   Clan,
   CombatLoversLocket,
   CommunityService,
+  DNALab,
   get,
   getBanishedMonsters,
   getKramcoWandererChance,
@@ -115,6 +118,7 @@ import {
   romanCandelabra,
   sendAutumnaton,
   sombrero,
+  tryAcquiringEffect,
   tryAcquiringOdeToBooze,
   useCenser,
   useCinch,
@@ -136,6 +140,24 @@ function haveFreeSkeletonBanish(): boolean {
     (have($skill`Snokebomb`) &&
       !Array.from(getBanishedMonsters().keys()).includes($skill`Snokebomb`))
   );
+}
+
+function prepareStompingBoots(): void {
+  if (familiarWeight($familiar`Pair of Stomping Boots`) / 5 < get("_banderRunaways", 0)) {
+    //Need more fam wt to runnaway
+    const neededWt = (get("_banderRunaways", 0) + 1) * 5;
+    const usefulEffects: Effect[] = [
+      $effect`Leash of Linguini`,
+      $effect`Empathy`,
+      $effect`Only Dogs Love a Drunken Sailor`,
+      $effect`Thoughtful Empathy`,
+    ];
+    let idx = 0;
+    while (familiarWeight($familiar`Pair of Stomping Boots`) < neededWt && idx < 4) {
+      tryAcquiringEffect(usefulEffects[idx]);
+      idx++;
+    }
+  }
 }
 
 export const RunStartQuest: Quest = {
@@ -938,6 +960,83 @@ export const RunStartQuest: Quest = {
       limit: { tries: 1 },
     },
     {
+      name: "Install DNA lab to workshed",
+      completed: () => !(getWorkshed() === $item.none) || !DNALab.have() || DNALab.installed(),
+      do: () => {
+        use($item`Little Geneticist DNA-Splicing Lab`);
+      },
+      limit: { tries: 1 },
+    },
+    {
+      name: "Weird Hybridize",
+      ready: () => DNALab.installed() && !DNALab.isHybridized($phylum`weird`),
+      prepare: () => {
+        prepareStompingBoots();
+      },
+      completed: () =>
+        DNALab.isHybridized($phylum`weird`) ||
+        !DNALab.have() ||
+        !DNALab.installed() ||
+        !have($familiar`Pair of Stomping Boots`),
+      //Todo actually work on location; for now make it work for me.
+      do: $location`Sloppy Seconds Diner`,
+      combat: new CombatStrategy().macro(
+        Macro.if_($monster`time cop`, Macro.default())
+          .tryItem($item`DNA extraction syringe`)
+          .runaway()
+          .abort(),
+      ),
+      outfit: (): OutfitSpec => ({
+        ...baseOutfit(false),
+        acc2: mobiusRing(),
+        acc3: $item`Peridot of Peril`,
+        familiar: $familiar`Pair of Stomping Boots`,
+      }),
+      post: () => {
+        if (get("dnaSyringe", "") === "weird") {
+          DNALab.hybridize();
+        }
+      },
+      attempted: () =>
+        !["Nothing Could Be Finer", "time cop", "Break Time!"].includes(get("lastEncounter")),
+      limit: { tries: 2 },
+    },
+    {
+      name: "Get Elemental tonic",
+      ready: () => DNALab.installed() && DNALab.isHybridized(),
+      prepare: (): void => {
+        prepareStompingBoots();
+        PeridotOfPeril.setChoice($monster`garbage tourist`);
+      },
+      completed: () =>
+        have($item`Gene Tonic: Elemental`) ||
+        !PeridotOfPeril.have() ||
+        !DNALab.have() ||
+        !DNALab.installed() ||
+        DNALab.tonicsLeft() === 0 ||
+        !have($familiar`Pair of Stomping Boots`) ||
+        PeridotOfPeril.periledToday($location`Barf Mountain`),
+      do: $location`Barf Mountain`,
+      combat: new CombatStrategy().macro(
+        Macro.if_($monster`time cop`, Macro.default())
+          .if_($monster`garbage tourist`, Macro.tryItem($item`DNA extraction syringe`).runaway())
+          .abort(),
+      ),
+      outfit: (): OutfitSpec => ({
+        ...baseOutfit(false),
+        acc2: mobiusRing(),
+        acc3: $item`Peridot of Peril`,
+        familiar: $familiar`Pair of Stomping Boots`,
+      }),
+      post: () => {
+        if (get("dnaSyringe", "") === "elemental") {
+          DNALab.makeTonic(1);
+        }
+      },
+      attempted: () => !["Welcome to Barf Mountain", "time cop"].includes(get("lastEncounter")),
+      limit: { tries: 2 },
+    },
+    {
       name: "Archaeologist's Spade Skeletons",
       ready: () => myLocation() === $location`The Skeleton Store`,
       completed: () =>
@@ -1151,6 +1250,7 @@ export const RunStartQuest: Quest = {
       ready: () =>
         have($item`Apriling band saxophone`) ||
         have($item`11-leaf clover`) ||
+        haveHeartstone() ||
         have($effect`Lucky!`),
       completed: () => myInebriety() >= 1 || get("instant_skipDistilledFortifiedWine", false),
       do: (): void => {

@@ -69,6 +69,12 @@ function miniKiwi(): Familiar {
     : $familiar.none;
 }
 
+// function stompingBoots(): Familiar {
+//   return haveAndNotExcluded($familiar`Pair of Stomping Boots`)
+//     ? $familiar`Pair of Stomping Boots`
+//     : $familiar.none;
+// }
+
 export function chooseFamiliar(allowAttackingFamiliars = true): Familiar {
   const defaultFam = haveAndNotExcluded($familiar`Cookbookbat`)
     ? $familiar`Cookbookbat`

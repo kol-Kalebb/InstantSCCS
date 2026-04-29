@@ -34,14 +34,33 @@ function getBestDartsOption(): number {
 }
 
 export function getMobiusOption(): number {
-  const desiredChoices = ["Go back and take a 20-year-long nap", "Go back and set an alarm"];
-  return Number(
-    maxBy(
-      Object.entries(availableChoiceOptions()),
-      ([text]) => (desiredChoices.includes(text) ? -desiredChoices.indexOf(text) : -Infinity),
-      true,
-    )[0],
+  const desiredChoices = [
+    "Give your past self investment tips",
+    "Stop your arch-nemesis as a baby",
+    "Go back and take a 20-year-long nap",
+    "Go back and set an alarm",
+  ];
+
+  const choices = availableChoiceOptions();
+  const choiceMap = new Map<string, number>(
+    Object.entries(choices).map(([k, v]) => [v, Number(k)]),
   );
+  let option = 0;
+  for (const text of desiredChoices) {
+    if (choiceMap.has(text)) {
+      option = choiceMap.get(text) ?? 0;
+      break;
+    }
+  }
+
+  return option;
+  // return Number(
+  //   maxBy(
+  //     Object.entries(availableChoiceOptions()),
+  //     ([text]) => (desiredChoices.includes(text) ? -desiredChoices.indexOf(text) : -Infinity),
+  //     true,
+  //   )[0],
+  // );
 }
 
 // eslint-disable-next-line no-unused-vars

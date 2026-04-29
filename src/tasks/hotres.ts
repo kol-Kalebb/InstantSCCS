@@ -9,6 +9,8 @@ import {
   inebrietyLimit,
   itemAmount,
   myInebriety,
+  myMeat,
+  npcPrice,
   use,
   useFamiliar,
   useSkill,
@@ -24,6 +26,7 @@ import {
   $skill,
   CombatLoversLocket,
   CommunityService,
+  CyberRealm,
   get,
   have,
   uneffect,
@@ -245,6 +248,7 @@ export const HotResQuest: Quest = {
           $effect`Hot-Headed`,
           $effect`Rainbowolin`,
           $effect`Rainbow Vaccine`,
+          $effect`Human-Elemental Hybrid`,
 
           // Famwt Buffs
           $effect`Blood Bond`,
@@ -268,6 +272,16 @@ export const HotResQuest: Quest = {
           )
             create($item`mini kiwi illicit antibiotic`, 1);
           tryAcquiringEffect($effect`Incredibly Healthy`);
+        }
+        // 500 meat for 5 turns saved
+        if (
+          CommunityService.HotRes.actualCost() >= 6 &&
+          CyberRealm.have() &&
+          CyberRealm.available() &&
+          myMeat() > npcPrice($item`Synapse Blaster`)
+        ) {
+          buy($item`Synapse Blaster`, 1);
+          use($item`Synapse Blaster`, 1);
         }
 
         // If it saves us >= 6 turns, try using a wish
