@@ -1037,6 +1037,40 @@ export const RunStartQuest: Quest = {
       limit: { tries: 2 },
     },
     {
+      name: "Get Fishy Tonic",
+      ready: () => DNALab.installed() && DNALab.isHybridized(),
+      prepare: (): void => {
+        prepareStompingBoots();
+      },
+      completed: () =>
+        have($item`Gene Tonic: Fish`, 2) ||
+        !DNALab.have() ||
+        !DNALab.installed() ||
+        DNALab.tonicsLeft() === 0 ||
+        !have($familiar`Pair of Stomping Boots`),
+      do: $location`Barf Mountain`,
+      combat: new CombatStrategy().macro(
+        Macro.if_($monster`time cop`, Macro.default())
+          .trySkill($skill`Sea *dent: Talk to Some Fish`)
+          .tryItem($item`DNA extraction syringe`)
+          .runaway()
+          .abort(),
+      ),
+      outfit: (): OutfitSpec => ({
+        ...baseOutfit(false),
+        weapon:$item`Monodent of the Sea`,
+        acc2: mobiusRing(),
+        familiar: $familiar`Pair of Stomping Boots`,
+      }),
+      post: () => {
+        if (get("dnaSyringe", "") === "fish") {
+          DNALab.makeTonic(2);
+        }
+      },
+      attempted: () => !["Welcome to Barf Mountain", "time cop"].includes(get("lastEncounter")),
+      limit: { tries: 2 },
+    },
+    {
       name: "Archaeologist's Spade Skeletons",
       ready: () => myLocation() === $location`The Skeleton Store`,
       completed: () =>
