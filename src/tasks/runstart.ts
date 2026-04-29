@@ -1058,7 +1058,7 @@ export const RunStartQuest: Quest = {
       ),
       outfit: (): OutfitSpec => ({
         ...baseOutfit(false),
-        weapon:$item`Monodent of the Sea`,
+        weapon: $item`Monodent of the Sea`,
         acc2: mobiusRing(),
         familiar: $familiar`Pair of Stomping Boots`,
       }),
